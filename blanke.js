@@ -19,14 +19,14 @@ String.prototype.replaceAll = function(find, replace) {
 };
 
 String.prototype.hashCode = function(){
-	var hash = 0;
-	if (this.length == 0) return hash;
-	for (i = 0; i < this.length; i++) {
-		char = this.charCodeAt(i);
-		hash = ((hash<<5)-hash)+char;
-		hash = hash & hash; // Convert to 32bit integer
-	}
-	return Math.abs(hash).toString();
+    var hash = 0;
+    if (this.length == 0) return hash;
+    for (i = 0; i < this.length; i++) {
+        char = this.charCodeAt(i);
+        hash = ((hash<<5)-hash)+char;
+        hash = hash & hash; // Convert to 32bit integer
+    }
+    return Math.abs(hash).toString();
 }
 
 String.prototype.addSlashes = function() 
@@ -34,6 +34,11 @@ String.prototype.addSlashes = function()
    //no need to do (str+'') anymore because 'this' can only be a string
    return this.replace(/[\\"']/g, '\\$&').replace(/\u0000/g, '\\0');
 } 
+
+function dispatchEvent(ev_name, ev_properties) {
+    var new_event = new CustomEvent(ev_name, {'detail': ev_properties});
+    document.dispatchEvent(new_event);
+}
 
 var blanke = {
     // possible choices: yes, no (MORE TO COME LATER)
@@ -188,6 +193,7 @@ var blanke = {
             if (type === "password")
                 value = b_util.encrypt(value);
 
+            dispatchEvent("blanke.form.change", {type: type, name: name, value: value, subcategory: subcat, group: group});
             if (fn_onChange) 
                 fn_onChange(type, name, value, subcat, group);
         });
