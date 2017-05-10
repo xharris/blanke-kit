@@ -40,6 +40,8 @@ function dispatchEvent(ev_name, ev_properties) {
     document.dispatchEvent(new_event);
 }
 
+var _highestWindowZ = 1000;
+
 var blanke = {
     // possible choices: yes, no (MORE TO COME LATER)
     showModal: function(html_body, choices) {
@@ -215,5 +217,86 @@ var blanke = {
         }
 
         return ret_parameters;
+    },
+
+    createWindow: function(options) {
+        var x = options.x;
+        var y = options.y;
+        var width = options.width;
+        var height = options.height;
+        var extra_class = options.class;
+        var title = options.title;
+        var html = ifndef(options.html, '');
+        var onClose = options.onClose;
+
+        var uid = guid();
+        var el = "body > .blanke-window[data-guid='"+uid+"']";
+
+        $("body").append(
+            "<div class='blanke-window "+extra_class+"' data-guid='"+uid+"'>"+
+                "<div class='title-bar'>"+
+                    "<div class='title'>"+title+"</div>"+
+                    "<button class='btn-close'>"+
+                        "<i class='mdi mdi-close'></i>"+
+                    "</button>"+
+                "</div>"+
+                "<div class='content'>"+html+"</div>"+
+            "</div>"
+        );
+        $(el).fadeIn("fast");
+
+        // set initial position
+        $(el).css({
+            "left": x + "px",
+            "top": y + "px",
+            "width": width + "px",
+            "height": height + "px",
+            "z-index": _highestWindowZ
+        });
+
+        $(el).resizable();
+
+        // bring window to top
+        $(el).on("mousedown", function(e){
+            $(this).css({
+                "z-index": _highestWindowZ
+            })
+        });
+
+        // add title-bar drag listeners
+        function _divMove(e) {
+            var div = document.querySelector(el);
+            div.style.left = (e.clientX - offX) + 'px';
+            div.style.top = (e.clientY - offY) + 'px';
+        }
+        var offX, offY;
+        $(el + " > .title-bar").on("mousedown", function(e){
+            $(el + " > .content").css("pointer-events", "none");
+
+            var div = $(el)[0];
+            offX = e.clientX - parseInt(div.offsetLeft);
+            offY = e.clientY - parseInt(div.offsetTop);
+
+            window.addEventListener('mousemove', _divMove, true);
+        });
+
+        $(window).on("mouseup", function(e){
+            $(el + " > .content").css("pointer-events", "all");
+            window.removeEventListener('mousemove', _divMove, true);
+        });
+
+        // close event
+        $(el + " > .title-bar > .btn-close").on("click", function(e){
+            var can_close = true;
+            if (onClose) {
+                can_close = ifndef(onClose(), true); // if onClose returns false, prevent closing
+            }
+            if (can_close) {
+                $(el).remove();
+            }       
+        });
+
+        return el;
     }
 }
+
