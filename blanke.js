@@ -40,9 +40,9 @@ function dispatchEvent(ev_name, ev_properties) {
     document.dispatchEvent(new_event);
 }
 
-var _highestWindowZ = 1000;
-
 var blanke = {
+    _windows: {},
+
     // possible choices: yes, no (MORE TO COME LATER)
     showModal: function(html_body, choices) {
         html_actions = "";
@@ -227,13 +227,19 @@ var blanke = {
         var extra_class = options.class;
         var title = options.title;
         var html = ifndef(options.html, '');
+        var uuid = ifndef(options.uuid, guid());
         var onClose = options.onClose;
 
-        var uid = guid();
-        var el = "body > .blanke-window[data-guid='"+uid+"']";
+        if ($(this._windows[uuid]).length > 0) {
+            $(this._windows[uuid]).trigger('mousedown');
+            return this._windows[uuid];
+        }
+
+        var el = "body > .blanke-window[data-guid='"+uuid+"']";
+        this._windows[uuid] = el;
 
         $("body").append(
-            "<div class='blanke-window "+extra_class+"' data-guid='"+uid+"'>"+
+            "<div class='blanke-window "+extra_class+"' data-guid='"+uuid+"'>"+
                 "<div class='title-bar'>"+
                     "<div class='title'>"+title+"</div>"+
                     "<button class='btn-close'>"+
@@ -246,21 +252,21 @@ var blanke = {
         $(el).fadeIn("fast");
 
         // set initial position
+        $(".blanke-window").css("z-index", "0");
         $(el).css({
             "left": x + "px",
             "top": y + "px",
             "width": width + "px",
             "height": height + "px",
-            "z-index": _highestWindowZ
+            "z-index": "1"
         });
 
         $(el).resizable();
 
         // bring window to top
-        $(el).on("mousedown", function(e){
-            $(this).css({
-                "z-index": _highestWindowZ
-            })
+        $(el).on("mousedown focus", function(e){
+            $(".blanke-window").css("z-index", "0");
+            $(this).css("z-index", "1");
         });
 
         // add title-bar drag listeners
