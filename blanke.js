@@ -1,3 +1,5 @@
+// requires jQuery Color Picker (http://www.laktek.com/2008/10/27/really-simple-color-picker-in-jquery/)
+
 function guid() {
   function s4() {
     return Math.floor((1 + Math.random()) * 0x10000)
@@ -91,6 +93,7 @@ var blanke = {
     createForm: function(selector_parent, input_info, user_val, fn_onChange, grouped=false) {
         // populate input section with inputs
         var html_inputs = '';
+
         for (var subcat in input_info) {
             html_inputs += "<div class='subcategory'><p class='title'>"+subcat.replace("_"," ")+"</p>";
 
@@ -170,6 +173,15 @@ var blanke = {
                             '<br>';
                     }
                 }
+                if (input.type === "color") {
+                    if (input.colors) 
+                        $.fn.colorPicker.defaults.colors = input.colors;
+                    html_inputs += 
+                        '<div class="ui-input-group">'+
+                            '<label>'+display_name+'</label>'+
+                            '<input class="ui-color" type="color" '+common_attr+' type="color" value="'+ifndef(user_val[input.name], "#ffffff")+'"/></div>'+
+                        '</div>';
+                }
             } // for-loop
 
             html_inputs += "</div>";
@@ -229,6 +241,7 @@ var blanke = {
         var html = ifndef(options.html, '');
         var uuid = ifndef(options.uuid, guid());
         var onClose = options.onClose;
+        var onResizeStop = options.onResizeStop;
 
         if ($(this._windows[uuid]).length > 0) {
             $(this._windows[uuid]).trigger('mousedown');
@@ -261,7 +274,12 @@ var blanke = {
             "z-index": "1"
         });
 
-        $(el).resizable();
+        $(el).resizable({
+            stop: function( event, ui ) {
+                if (onResizeStop)
+                    onResizeStop(event, ui);
+            }
+        });
 
         // bring window to top
         $(el).on("mousedown focus", function(e){

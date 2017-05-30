@@ -127,7 +127,7 @@
 }
 
 .ui-select {
-    padding: 5px;
+    padding: 3px;
     border-radius: 5px;
     outline: none;
     border-color: black;
@@ -297,8 +297,20 @@
     }
 }
 
+.ui-color {
+    border: none;
+    padding: 0px;
+    outline: 1px solid black;
+    outline-offset: -4px;
+    width: 25px;
+    height: 25px;
+    vertical-align: middle;
+    border-radius: 100%;
+    background: none;
+}
+
 /* Window CSS */
-@title-bar-height: 20px;
+@title-bar-height: 14px;
 .blanke-window {
     display: none;
     z-index: 100;
@@ -318,6 +330,7 @@
 
         >* {
             .no-select();
+            font-size: 12px;
         }
 
         >.title {
@@ -336,13 +349,12 @@
             border: none;
             outline: none; 
             cursor: pointer;
-            font-size: 17px;
         }
     }
 
     >.content {
         margin-bottom: 0px;
-        overflow: auto;
+        overflow: hidden;
         position: absolute;
         top: @title-bar-height;
         bottom: 0px;
