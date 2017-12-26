@@ -21,13 +21,24 @@
 }
 /* parent must be relative */
 .centered {
+  left: 50%;
+  transform: translateX(-50%);
   position: absolute;
   top: 50%;
+  transform: translateY(-50%);
+}
+.centered-h {
+  position: absolute;
   left: 50%;
-  transform: translate(-50%, -50%);
+  transform: translateX(-50%);
+}
+.centered-v {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
 }
 *:not(.no-custom-scroll)::-webkit-scrollbar-track {
-  border: 1px solid #BDBDBD;
+  /* border: 1px solid #BDBDBD; */
   background-color: #E0E0E0;
 }
 *:not(.no-custom-scroll)::-webkit-scrollbar {
@@ -38,7 +49,10 @@
   background: transparent;
 }
 *:not(.no-custom-scroll)::-webkit-scrollbar-thumb {
-  background: #212121 !important;
+  background: #757575 !important;
+}
+*:not(.no-custom-scroll)::-webkit-scrollbar-corner {
+  background: rgba(0, 0, 0, 0);
 }
 /*
     HEADER

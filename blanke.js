@@ -16,8 +16,9 @@ function htmlEncode(s) {
     return s;
 }
 
+
 String.prototype.replaceAll = function(find, replace) {
-    return str.replace(new RegExp(find, 'g'), replace);
+    return this.replace(new RegExp(find, 'g'), replace);
 };
 
 String.prototype.hashCode = function(){
@@ -44,6 +45,26 @@ function dispatchEvent(ev_name, ev_properties) {
 
 var blanke = {
     _windows: {},
+
+    chooseFile(type, onChange, filename='') {
+        var chooser = document.querySelector("#_blankeFileDialog");
+        if (chooser != null) {
+           chooser.remove();
+        }
+        chooser = document.createElement("input");
+        chooser.id = "#_blankeFileDialog";
+        chooser.style.display = "none";
+        chooser.type = "file";
+        if (type != '') chooser.setAttribute(type, filename)
+
+        document.body.appendChild(chooser);
+        
+        chooser.addEventListener("change", function(evt) {
+            if (onChange) onChange(this.value);
+        }, false);
+
+        chooser.click();
+    },
 
     // possible choices: yes, no (MORE TO COME LATER)
     showModal: function(html_body, choices) {

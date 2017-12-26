@@ -20,15 +20,25 @@
 
 /* parent must be relative */
 .centered {
+    .centered-h();
+    .centered-v();
+    transform: translate(-50%,-50%);
+}
+
+.centered-h {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+}
+.centered-v {
     position: absolute;
     top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
+    transform: translateY(-50%);
 }
 
 *:not(.no-custom-scroll) {
     &::-webkit-scrollbar-track {
-        border: 1px solid #BDBDBD;
+        /* border: 1px solid #BDBDBD; */
         background-color: #E0E0E0;
     }
 
@@ -42,7 +52,11 @@
     }
 
     &::-webkit-scrollbar-thumb {
-        background: #212121 !important;
+        background: #757575 !important;
+    }
+
+    &::-webkit-scrollbar-corner {
+        background: rgba(0,0,0,0);
     }
 }
 
@@ -75,7 +89,7 @@
     border: none !important;
     outline: none;
     background-color: transparent;
-    font-size: 12px;
+    font-size: 14px;
     cursor: pointer;
     vertical-align: top;
 
