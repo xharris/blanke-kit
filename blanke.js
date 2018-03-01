@@ -46,7 +46,11 @@ function dispatchEvent(ev_name, ev_properties) {
 var blanke = {
     _windows: {},
 
-    chooseFile(type, onChange, filename='') {
+    getElement: function(sel) {
+        return document.querySelector(sel);
+    },
+
+    chooseFile: function(type, onChange, filename='') {
         var chooser = document.querySelector("#_blankeFileDialog");
         if (chooser != null) {
            chooser.remove();
@@ -55,7 +59,7 @@ var blanke = {
         chooser.id = "#_blankeFileDialog";
         chooser.style.display = "none";
         chooser.type = "file";
-        if (type != '') chooser.setAttribute(type, filename)
+        if (type != '' && filename) chooser.setAttribute(type, filename)
 
         document.body.appendChild(chooser);
         
@@ -73,38 +77,45 @@ var blanke = {
 
         // fill in action buttons
         for (var c = 0; c < choice_keys.length; c++) {
-            var choice_key = choice_keys[c].toLowerCase();
-            var choice_fn = choices[choice_key];
+            var choice_key = choice_keys[c];
 
-            html_actions += "<button class='ui-button-sphere' data-action='"+choice_key+"'>";
-            if (choice_key == "yes") {
-                html_actions += "<i class='mdi mdi-check'></i>"
+            btn_type = "sphere";
+            html_inside = choice_key;
+            if (choice_key.toLowerCase() == "yes") {
+                html_inside = "<i class='mdi mdi-check'></i>"
             }
-            if (choice_key == "no") {
-                html_actions += "<i class='mdi mdi-close'></i>"
+            else if (choice_key.toLowerCase() == "no") {
+                html_inside = "<i class='mdi mdi-close'></i>"
             }
-            html_actions += "</button>";
+            else {
+                html_inside = choice_key
+                btn_type = "rect"
+            }
+
+            html_actions += "<button class='ui-button-"+btn_type+"' data-action='"+choice_key+"'>"+html_inside+"</button>";
         }
 
         // add dialog to page
         var uuid = guid();
-        $("body").append(
+        var e = document.createElement('div');
+        e.innerHTML = 
             "<div class='ui-modal' data-uuid='"+uuid+"'>"+
                 "<div class='modal-body'>"+html_body+"</div>"+
                 "<div class='modal-actions'>"+html_actions+"</div>"+
-            "</div>"
-        );
-        $("body > .ui-modal[data-uuid='"+uuid+"'] > .modal-actions > button").on('click', function(){
-            $(this).parent().parent().remove();
-        }); 
+            "</div>";
+        while(e.firstChild) {
+            document.body.appendChild(e.firstChild);
+        }
 
         // bind button events with their choice functions
-        for (var c = 0; c < choice_keys.length; c++) {
-            var choice_key = choice_keys[c].toLowerCase();
-            var choice_fn = choices[choice_key];
+        choice_keys.forEach(function(c){
+            var choice_fn = choices[c];
 
-            $("body > .ui-modal[data-uuid='"+uuid+"'] > .modal-actions > button[data-action='" + choice_key + "']").on('click', choice_fn);
-        }
+            blanke.getElement("body > .ui-modal[data-uuid='"+uuid+"'] > .modal-actions > button[data-action='" + c + "']").onclick = function(){
+                choice_fn();
+                blanke.getElement("body > .ui-modal[data-uuid='"+uuid+"']").remove();
+            };
+        });
     },
 
     // selector_parent: selector for where to put the form inputs
