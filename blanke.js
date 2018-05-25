@@ -43,11 +43,115 @@ function dispatchEvent(ev_name, ev_properties) {
     document.dispatchEvent(new_event);
 }
 
+class BlankeForm {
+    /*  inputs = [ [input_name, input_type, {other_args}] ]
+        
+        input types (input_type {extra_args})
+            - text {
+                inputs = 1, number of input boxes
+                separator = '', separator between multiple input boxes
+            }
+    */
+    constructor (inputs) {
+        this.container = blanke.createElement("div", "form-container");
+        this.arg_inputs = inputs;
+        this.input_ref = {};
+        this.input_values = {};
+
+        for (var input of inputs) {
+            let el_container    = blanke.createElement("div", "form-group");
+            let el_label        = blanke.createElement("p", "form-label");
+            let el_inputs_container=blanke.createElement("div","form-inputs");
+
+            let input_name = input[0];
+            let input_type = input[1];
+            let extra_args = input[2];
+            this.input_ref[input_name] = [];
+            this.input_values[input_name] = [];
+
+            el_container.setAttribute("data-type", input_type);
+
+            el_label.innerHTML = input_name;
+            el_container.appendChild(el_label);
+
+            if (input_type == "text") {
+                let input_count = 1;
+                if (extra_args.inputs) input_count = extra_args.inputs;
+                el_container.setAttribute("data-size", input_count);
+
+                // add inputs
+                for (var i = 0; i < input_count; i++) {
+                    let el_input = blanke.createElement("input","form-text");
+                    el_input.value = 0;
+                    el_input.name_ref = input_name;
+                    el_input.setAttribute('data-index',i);
+                    this.input_ref[input_name].push(el_input);
+                    this.input_values[input_name].push(0);
+                    el_inputs_container.appendChild(el_input);
+
+                    // add separator if necessary
+                    if (i < input_count - 1) {
+                        let el_sep = blanke.createElement("p","form-separator");
+                        el_sep.innerHTML = extra_args.separator;
+                        el_inputs_container.appendChild(el_sep);
+                    }
+                }
+            }
+            el_container.appendChild(el_inputs_container);
+
+            el_container.setAttribute('data-name',input_name);
+
+            this.container.appendChild(el_container);
+        }
+    }
+
+    onChange (input_name, func) {
+        let this_ref = this;
+        for (var input of this.input_ref[input_name]) {
+            input.addEventListener('input', function(e){
+                this_ref.input_values[e.target.name_ref][parseInt(e.target.dataset['index'])] = e.target.value;
+                let ret_val = func(this_ref.input_values[e.target.name_ref].slice());
+                
+                // if values are returned, set the inputs to them
+                if (ret_val) {
+                    for (var input2 in this_ref.input_ref[input_name]) {
+                        this_ref.input_ref[input_name][input2].value = ret_val[input2];
+                    }
+                }
+            });
+        }
+    }
+
+    setValue (input_name, value, index) {
+        if (index == undefined)
+            this.input_ref[input_name].value = value;
+        else
+            this.input_ref[input_name][index].value = value;
+    }
+}
+
 var blanke = {
     _windows: {},
 
     getElement: function(sel) {
         return document.querySelector(sel);
+    },
+
+    getElements: function(sel) {
+        return document.querySelectorAll(sel);
+    },
+
+    createElement: function(el_type, el_class) {
+        var ret_el = document.createElement(el_type);
+        if (Array.isArray(el_class)) ret_el.classList.add(...el_class);
+        else ret_el.classList.add(el_class);
+        return ret_el;
+    },
+
+    clearElement: function(element) {
+        while (element.firstChild) {
+            element.removeChild(element.firstChild);
+        }
     },
 
     chooseFile: function(type, onChange, filename='') {
