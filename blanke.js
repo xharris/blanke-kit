@@ -210,11 +210,49 @@ var blanke = {
         }
     },
 
+    destroyElement: function(element) {    
+        element.parentNode.removeChild(element);
+    },
+
     cooldown_keys: {},
     cooldownFn: function(name, cooldown_ms, fn) {
         if (blanke.cooldown_keys[name])
             clearTimeout(blanke.cooldown_keys[name])
         blanke.cooldown_keys[name] = setTimeout(fn, cooldown_ms);
+    },
+
+    el_toasts: undefined,
+    toast: function(text) {
+        if (!blanke.el_toasts) {
+            blanke.el_toasts = blanke.createElement('div','blankejs-toasts');
+            document.body.appendChild(blanke.el_toasts);
+        }
+
+        let el_new_toast = blanke.createElement("div","toast-container");
+        let el_content = blanke.createElement("p","content");
+        el_content.innerHTML = text;
+        el_new_toast.appendChild(el_content);
+        blanke.el_toasts.appendChild(el_new_toast);
+
+        // animation
+        Array.from(blanke.el_toasts.children).forEach(function(el) {
+            let animation = [
+                { transform: 'translateY('+el.offsetHeight+'px)' },
+                { transform: 'translateY(0px)' }
+            ];
+            el.animate(animation, {
+                duration: 200,
+                iterations: 1,
+                easing: 'ease-out'
+            });
+        });
+
+        setTimeout(function(){
+            let animation = el_new_toast.animate([{ opacity:1 }, { opacity:0 }], { duration:200, iterations:1, easing:'ease-in'})
+            animation.pause();
+            animation.onfinish = function(){ blanke.destroyElement(el_new_toast); }
+            animation.play();
+        }, 4000);
     },
 
     chooseFile: function(type, onChange, filename='', multiple=false) {
