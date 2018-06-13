@@ -17,6 +17,31 @@ function htmlEncode(s) {
 }
 
 
+
+// Extend the string type to allow converting to hex for quick access.
+String.prototype.toHex = function() {
+    function intToARGB(i) {
+        var hex = ((i>>24)&0xFF).toString(16) +
+                ((i>>16)&0xFF).toString(16) +
+                ((i>>8)&0xFF).toString(16) +
+                (i&0xFF).toString(16);
+        // Sometimes the string returned will be too short so we 
+        // add zeros to pad it out, which later get removed if
+        // the length is greater than six.
+        hex += '000000';
+        return hex.substring(0, 6);
+    }
+
+    function hashCode(str) {
+        var hash = 0;
+        for (var i = 0; i < str.length; i++) {
+            hash = str.charCodeAt(i) + ((hash << 5) - hash);
+        }
+        return hash;
+    }
+    return intToARGB(hashCode(this));
+}
+
 String.prototype.replaceAll = function(find, replace) {
     return this.replace(new RegExp(find, 'g'), replace);
 };
@@ -57,6 +82,7 @@ class BlankeForm {
         this.arg_inputs = inputs;
         this.input_ref = {};
         this.input_values = {};
+        this.input_types = {};
 
         for (var input of inputs) {
             let el_container    = blanke.createElement("div", "form-group");
@@ -65,16 +91,19 @@ class BlankeForm {
 
             let input_name = input[0];
             let input_type = input[1];
-            let extra_args = input[2];
+            let extra_args = input[2] || {};
             this.input_ref[input_name] = [];
             this.input_values[input_name] = [];
+            this.input_types[input_name] = input_type;
+
+            let show_label = extra_args['label'] || true;
 
             el_container.setAttribute("data-type", input_type);
 
             el_label.innerHTML = input_name;
-            el_container.appendChild(el_label);
+            if (show_label) el_container.appendChild(el_label);
 
-            if (input_type == "text") {
+            if (input_type == "text" || input_type == "number") {
                 let input_count = 1;
                 if (extra_args.inputs) input_count = extra_args.inputs;
                 el_container.setAttribute("data-size", input_count);
@@ -83,10 +112,11 @@ class BlankeForm {
                 for (var i = 0; i < input_count; i++) {
                     let el_input = blanke.createElement("input","form-text");
                     el_input.value = 0;
-                    el_input.name_ref = input_name;
+                    el_input.type = input_type;
+
+                    this.prepareInput(el_input, input_name);
+
                     el_input.setAttribute('data-index',i);
-                    this.input_ref[input_name].push(el_input);
-                    this.input_values[input_name].push(0);
                     el_inputs_container.appendChild(el_input);
 
                     // add separator if necessary
@@ -97,19 +127,42 @@ class BlankeForm {
                     }
                 }
             }
-            el_container.appendChild(el_inputs_container);
 
+            if (input_type == "color") {
+                let el_input = blanke.createElement("input","form-color");
+                el_input.type = "color";
+                this.prepareInput(el_input, input_name);
+                el_inputs_container.appendChild(el_input);
+            }
+
+            el_container.appendChild(el_inputs_container);
             el_container.setAttribute('data-name',input_name);
 
             this.container.appendChild(el_container);
         }
     }
 
+    // "private" method
+    prepareInput (element, name) {
+        element.name_ref = name;
+        this.input_ref[name].push(element);
+        this.input_values[name].push(0);
+    }
+
     onChange (input_name, func) {
         let this_ref = this;
         for (var input of this.input_ref[input_name]) {
-            input.addEventListener('input', function(e){
-                this_ref.input_values[e.target.name_ref][parseInt(e.target.dataset['index'])] = e.target.value;
+            let event_type = 'input';
+
+            if (this.input_types[input_name] == "color") event_type = "change";
+
+            input.addEventListener(event_type, function(e){
+                if (this_ref.input_types[e.target.name_ref] == "text")
+                    this_ref.input_values[e.target.name_ref][parseInt(e.target.dataset['index'])] = e.target.value;
+                
+                if (this_ref.input_types[e.target.name_ref] == "number")
+                    this_ref.input_values[e.target.name_ref][parseInt(e.target.dataset['index'])] = parseInt(e.target.value);
+
                 let ret_val = func(this_ref.input_values[e.target.name_ref].slice());
                 
                 // if values are returned, set the inputs to them
@@ -122,11 +175,14 @@ class BlankeForm {
         }
     }
 
+    getValue (input_name, index) {
+        index = index || 0;
+        return this.input_ref[input_name][index].value;
+    }
+
     setValue (input_name, value, index) {
-        if (index == undefined)
-            this.input_ref[input_name].value = value;
-        else
-            this.input_ref[input_name][index].value = value;
+        index = index || 0;
+        this.input_ref[input_name][index].value = value;
     }
 }
 
@@ -154,7 +210,14 @@ var blanke = {
         }
     },
 
-    chooseFile: function(type, onChange, filename='') {
+    cooldown_keys: {},
+    cooldownFn: function(name, cooldown_ms, fn) {
+        if (blanke.cooldown_keys[name])
+            clearTimeout(blanke.cooldown_keys[name])
+        blanke.cooldown_keys[name] = setTimeout(fn, cooldown_ms);
+    },
+
+    chooseFile: function(type, onChange, filename='', multiple=false) {
         var chooser = document.querySelector("#_blankeFileDialog");
         if (chooser != null) {
            chooser.remove();
@@ -164,6 +227,7 @@ var blanke = {
         chooser.style.display = "none";
         chooser.type = "file";
         if (type != '' && filename) chooser.setAttribute(type, filename)
+        if (multiple) chooser.setAttribute('multiple','');
 
         document.body.appendChild(chooser);
         
