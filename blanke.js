@@ -46,6 +46,10 @@ String.prototype.replaceAll = function(find, replace) {
     return this.replace(new RegExp(find, 'g'), replace);
 };
 
+String.prototype.escapeSlashes = function() {
+    return this.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|\"\']/g, "\\$&");
+}
+
 String.prototype.hashCode = function(){
 	var hash = 0;
 	if (this.length == 0) return hash;
