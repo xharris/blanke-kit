@@ -139,6 +139,29 @@ class BlankeForm {
                 el_inputs_container.appendChild(el_input);
             }
 
+            if (input_type == "select") {
+                let el_input = blanke.createElement("select","form-select");
+                /*
+                if (extra_args.placeholder) {
+                    let placeholder = app.createElement("option");
+                    placeholder.selected = true;
+                    placeholder.disabled = true;
+                    placeholder.value = input_name;
+                    el_input.appendChild(placeholder);
+                }*/
+
+                // add choices
+                for (let c of extra_args.choices) {
+                    var new_option = app.createElement("option");
+                    new_option.value = c;
+                    new_option.innerHTML = c;
+                    el_input.appendChild(new_option);
+                }
+
+                this.prepareInput(el_input, input_name);
+                el_inputs_container.appendChild(el_input);
+            }
+
             el_container.appendChild(el_inputs_container);
             el_container.setAttribute('data-name',input_name);
 
@@ -158,21 +181,25 @@ class BlankeForm {
         for (var input of this.input_ref[input_name]) {
             let event_type = 'input';
 
-            if (this.input_types[input_name] == "color") event_type = "change";
+            if (["color", "select"].includes(this.input_types[input_name])) event_type = "change";
 
             input.addEventListener(event_type, function(e){
-                if (this_ref.input_types[e.target.name_ref] == "text")
-                    this_ref.input_values[e.target.name_ref][parseInt(e.target.dataset['index'])] = e.target.value;
-                
-                if (this_ref.input_types[e.target.name_ref] == "number")
-                    this_ref.input_values[e.target.name_ref][parseInt(e.target.dataset['index'])] = parseInt(e.target.value);
+                let input_type = this_ref.input_types[e.target.name_ref];
+                let input_value = this_ref.input_values[e.target.name_ref];
+                let input_ref = this_ref.input_ref[input_name];
 
-                let ret_val = func(this_ref.input_values[e.target.name_ref].slice());
+                if (input_type == "text" || input_type == "select")
+                    input_value[parseInt(e.target.dataset['index']) || 0] = e.target.value;
+                
+                if (input_type == "number")
+                    input_value[parseInt(e.target.dataset['index']) || 0] = parseInt(e.target.value);
+
+                let ret_val = func(input_value.slice());
                 
                 // if values are returned, set the inputs to them
                 if (ret_val) {
-                    for (var input2 in this_ref.input_ref[input_name]) {
-                        this_ref.input_ref[input_name][input2].value = ret_val[input2];
+                    for (var input2 in input_ref) {
+                        input_ref[input2].value = ret_val[input2];
                     }
                 }
             });
