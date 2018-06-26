@@ -72,6 +72,162 @@ function dispatchEvent(ev_name, ev_properties) {
     document.dispatchEvent(new_event);
 }
 
+class BlankeListView {
+    constructor (options) {
+        var this_ref = this;
+
+        this.options = options;
+        this.options.new_item = this.options.new_item || "item";
+        this.options.buttons = this.options.buttons || ['add','move-up','move-down'];
+        this.selected_text = '';
+
+        this.container = blanke.createElement("div","list-view-container");
+
+        // add title
+        if (options.title) {
+            let el_title = blanke.createElement("p","list-title");
+            el_title.innerHTML = options.title;
+            this.container.appendChild(el_title);
+        }
+
+        // add item container
+        this.el_items_container = blanke.createElement("div","items-container");
+
+        // add list action buttons
+        let buttons = {
+            "add":[
+                "plus", "add a"+('aeiouy'.includes(this.options.new_item.charAt(0)) ? 'n' : '')+" "+this.options.new_item,
+                function(e){
+                    let count = this_ref.el_items_container.children.length;
+
+                    let text = this_ref.options.new_item+(count+1)
+                    let ret_text = this_ref.onItemAdd(text);
+                    this_ref.addItem(ret_text || text);
+            }],
+            "move-up":[
+                "chevron-up","",
+                function(e){
+                    console.log('move up')
+            }],
+            "move-down":[
+                "chevron-down","",
+                function(e){
+                    console.log('move down')
+            }]
+        };
+        let el_actions_container = blanke.createElement("div","actions-container");
+        for (let btn of this.options.buttons) {
+            let el_action = blanke.createElement("button",["ui-button-sphere",btn]);
+            let el_icon = blanke.createElement("i",["mdi","mdi-"+buttons[btn][0]]);
+
+            el_action.appendChild(el_icon);
+            el_action.title = buttons[btn][1];
+            el_action.addEventListener('click', buttons[btn][2]);
+
+            el_actions_container.appendChild(el_action);
+        }
+
+        this.container.appendChild(el_actions_container);
+        this.container.appendChild(this.el_items_container);
+    }
+
+    setItems (list) {
+        this.clearItems();
+        for (let item of list) {
+            this.addItem(item);
+        }
+    }
+
+    clearItems () {
+        blanke.clearElement(this.el_items_container);
+    }
+
+    addItem (text) {
+        let this_ref = this;
+
+        let el_item_container = blanke.createElement("div","item");
+        let el_item_text = blanke.createElement("span","item-text");
+        let el_item_actions = blanke.createElement("div","item-actions");
+
+        el_item_text.innerHTML = text;
+        el_item_text.style.pointerEvents = "none";
+
+        // add item actions
+        if (this.options.actions) {
+            for (let opt in this.options.actions) {
+                let el_action = blanke.createElement("button","ui-button-sphere");
+                let el_icon = blanke.createElement("i",["mdi","mdi-"+opt]);
+
+                el_action.title = this.options.actions[opt];
+                el_action.addEventListener('click', function(e){
+                    e.stopPropagation();
+                    this_ref.onItemAction(opt, text);
+                });
+
+                el_action.appendChild(el_icon);
+                el_item_actions.appendChild(el_action);
+            }
+        }
+
+        // add item click event
+        el_item_container.el_text = el_item_text;
+        el_item_container.addEventListener('click', function(){
+            this_ref.selectItem(this.el_text.innerHTML);
+            this_ref.onItemSelect(this.el_text.innerHTML);
+        });
+
+        el_item_container.appendChild(el_item_text);
+        el_item_container.appendChild(el_item_actions);
+
+        this.el_items_container.appendChild(el_item_container);
+
+        // was the list cleared and it was already a selection?
+        if (this.selected_text == text)
+            this.selectItem(text);
+    }
+
+    // highlight it, but dont trigger the event
+    selectItem (text) {
+        // clear element selection class
+        let el_selected;
+        let children = this.el_items_container.children;
+        for (let c = 0; c < children.length; c++) {
+            children[c].classList.remove('selected');
+
+            console.log(children[c].el_text)
+            if (children[c].el_text.innerHTML == text)
+                el_selected = children[c];
+        }
+
+        if (el_selected) {
+            el_selected.classList.add('selected');
+            this.selected_text = el_selected.innerHTML;
+        }
+    }
+
+    removeItem (text) {
+        let children = this.el_items_container.children;
+        for (let c = 0; c < children.length; c++) {
+            if (children[c].el_text.innerHTML == text)
+                blanke.destroyElement(children[c]);
+        }
+    }
+
+    renameItem (text, new_text) {
+        let children = this.el_items_container.children;
+        for (let c = 0; c < children.length; c++) {
+            if (children[c].el_text.innerHTML == text)
+                children[c].el_text.innerHTML = new_text;
+        }
+    }
+
+    onItemAdd (text) { }
+
+    onItemAction (item_icon, item_text) { }
+
+    onItemSelect (item_text) { }
+}
+
 class BlankeForm {
     /*  inputs = [ [input_name, input_type, {other_args}] ]
         
@@ -79,6 +235,9 @@ class BlankeForm {
             - text {
                 inputs = 1, number of input boxes
                 separator = '', separator between multiple input boxes
+            }
+            - number {
+                same as text
             }
     */
     constructor (inputs) {
