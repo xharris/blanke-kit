@@ -406,8 +406,10 @@ var blanke = {
 
     cooldown_keys: {},
     cooldownFn: function(name, cooldown_ms, fn) {
-        if (blanke.cooldown_keys[name])
+        if (blanke.cooldown_keys[name]) 
             clearTimeout(blanke.cooldown_keys[name])
+        else
+            fn();
         blanke.cooldown_keys[name] = setTimeout(fn, cooldown_ms);
     },
 
