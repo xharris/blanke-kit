@@ -194,7 +194,6 @@ class BlankeListView {
         for (let c = 0; c < children.length; c++) {
             children[c].classList.remove('selected');
 
-            console.log(children[c].el_text)
             if (children[c].el_text.innerHTML == text)
                 el_selected = children[c];
         }
