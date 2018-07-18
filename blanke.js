@@ -100,7 +100,7 @@ class BlankeListView {
                 function(e){
                     let count = this_ref.el_items_container.children.length;
 
-                    let text = this_ref.options.new_item+(count+1)
+                    let text = this_ref.options.new_item+(count)
                     let ret_text = this_ref.onItemAdd(text);
                     this_ref.addItem(ret_text || text);
             }],
