@@ -1,5 +1,16 @@
 // requires jQuery Color Picker (http://www.laktek.com/2008/10/27/really-simple-color-picker-in-jquery/)
 
+function ifndef(val, def) {
+    if (val == undefined) return def;
+}
+
+function ifndef_obj(obj, defaults) {
+    if (!obj) obj = {};
+    for (let d in defaults) {
+        if (!obj[d]) obj[d] = defaults[d];
+    }
+}
+
 function guid() {
   function s4() {
     return Math.floor((1 + Math.random()) * 0x10000)
@@ -352,6 +363,9 @@ class BlankeForm {
                 if (input_type == "number")
                     input_value[parseInt(e.target.dataset['index']) || 0] = parseInt(e.target.value);
 
+                if (input_type == "color")
+                    input_value[parseInt(e.target.dataset['index']) || 0] = e.target.value;
+
                 let ret_val = func(input_value.slice());
                 
                 // if values are returned, set the inputs to them
@@ -372,6 +386,7 @@ class BlankeForm {
     setValue (input_name, value, index) {
         index = index || 0;
         this.input_ref[input_name][index].value = value;
+        this.input_values[input_name][index] = value;
     }
 }
 
@@ -402,7 +417,7 @@ var blanke = {
     destroyElement: function(element) {    
         element.parentNode.removeChild(element);
     },
-
+    
     cooldown_keys: {},
     cooldownFn: function(name, cooldown_ms, fn) {
         if (blanke.cooldown_keys[name]) 
