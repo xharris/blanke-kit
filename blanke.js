@@ -269,13 +269,14 @@ class BlankeForm {
             this.input_values[input_name] = [];
             this.input_types[input_name] = input_type;
 
-            let show_label = extra_args['label'] || true;
+            let show_label = extra_args.label;
 
             el_container.setAttribute("data-type", input_type);
 
             el_label.innerHTML = input_name;
-            if (show_label) el_container.appendChild(el_label);
-
+            if (show_label !== false) 
+                el_container.appendChild(el_label);
+            
             if (input_type == "text" || input_type == "number") {
                 let input_count = 1;
                 if (extra_args.inputs) input_count = extra_args.inputs;
