@@ -2,6 +2,7 @@
 
 function ifndef(val, def) {
     if (val == undefined) return def;
+    return val
 }
 
 function ifndef_obj(obj, defaults) {
