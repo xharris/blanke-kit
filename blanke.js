@@ -287,13 +287,23 @@ class BlankeForm {
             this.input_values[input_name] = [];
             this.input_types[input_name] = input_type;
 
+            // input label
             let show_label = extra_args.label;
 
-            el_container.setAttribute("data-type", input_type);
+            if (input_type == "button")
+                show_label = false;
 
+            el_container.setAttribute("data-type", input_type);
             el_label.innerHTML = input_name;
             if (show_label !== false) 
                 el_container.appendChild(el_label);
+
+            if (input_type == "button") {
+                let el_input = blanke.createElement("button","form-button");
+                el_input.innerHTML = input_name;
+                this.prepareInput(el_input, input_name);
+                el_inputs_container.appendChild(el_input);
+            }
             
             if (input_type == "text" || input_type == "number") {
                 let input_count = 1;
@@ -370,6 +380,7 @@ class BlankeForm {
             let event_type = 'input';
 
             if (["color", "select"].includes(this.input_types[input_name])) event_type = "change";
+            if (this.input_types[input_name] == "button") event_type = "click";
 
             input.addEventListener(event_type, function(e){
                 let input_type = this_ref.input_types[e.target.name_ref];
