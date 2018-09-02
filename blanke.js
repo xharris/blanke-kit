@@ -28,8 +28,6 @@ function htmlEncode(s) {
     return s;
 }
 
-
-
 // Extend the string type to allow converting to hex for quick access.
 String.prototype.toHex = function() {
     function intToARGB(i) {
@@ -458,7 +456,7 @@ var blanke = {
     },
 
     el_toasts: undefined,
-    toast: function(text) {
+    toast: function(text, duration) {
         if (!blanke.el_toasts) {
             blanke.el_toasts = blanke.createElement('div','blankejs-toasts');
             document.body.appendChild(blanke.el_toasts);
@@ -488,7 +486,7 @@ var blanke = {
             animation.pause();
             animation.onfinish = function(){ blanke.destroyElement(el_new_toast); }
             animation.play();
-        }, 4000);
+        }, duration || 4000);
     },
 
     chooseFile: function(type, onChange, filename='', multiple=false) {
