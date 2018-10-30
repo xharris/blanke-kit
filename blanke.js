@@ -449,9 +449,14 @@ var blanke = {
     cooldown_keys: {},
     cooldownFn: function(name, cooldown_ms, fn) {
         if (!blanke.cooldown_keys[name]) 
-            clearTimeout(blanke.cooldown_keys[name])
-
-        blanke.cooldown_keys[name] = setTimeout(fn, cooldown_ms);
+            blanke.cooldown_keys[name] = {
+                timer: setTimeout(function(){
+                    blanke.cooldown_keys[name].func();
+                    delete blanke.cooldown_keys[name];
+                },cooldown_ms),
+                func: fn
+            }
+        blanke.cooldown_keys[name].func = fn;
     },
 
     el_toasts: undefined,
