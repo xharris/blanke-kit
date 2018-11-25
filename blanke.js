@@ -247,6 +247,15 @@ class BlankeListView {
         }
     }
 
+    getItems () {
+        let ret_list = [];
+        let children = this.el_items_container.children;
+        for (let c = 0; c < children.length; c++) {
+            ret_list.append(children[c].el_text.innerHTML)
+        }
+        return ret_list;
+    }
+
     onItemAdd (text) { }
 
     onItemAction (item_icon, item_text) { }
@@ -261,6 +270,7 @@ class BlankeForm {
             - text {
                 inputs = 1, number of input boxes
                 separator = '', separator between multiple input boxes
+                default = null
             }
             - number {
                 same as text
@@ -274,94 +284,115 @@ class BlankeForm {
         this.input_types = {};
 
         for (var input of inputs) {
-            let el_container    = blanke.createElement("div", "form-group");
-            let el_label        = blanke.createElement("p", "form-label");
-            let el_inputs_container=blanke.createElement("div","form-inputs");
+            this.addInput(input);
+        }
+    }
 
-            let input_name = input[0];
-            let input_type = input[1];
-            let extra_args = input[2] || {};
-            this.input_ref[input_name] = [];
-            this.input_values[input_name] = [];
-            this.input_types[input_name] = input_type;
+    addInput (input) {
+        let el_container    = blanke.createElement("div", "form-group");
+        let el_label        = blanke.createElement("p", "form-label");
+        let el_inputs_container=blanke.createElement("div","form-inputs");
 
-            // input label
-            let show_label = extra_args.label;
+        let input_name = input[0];
+        let input_type = input[1];
+        let extra_args = input[2] || {};
+        this.input_ref[input_name] = [];
+        this.input_values[input_name] = [];
+        this.input_types[input_name] = input_type;
 
-            if (input_type == "button")
-                show_label = false;
+        // input label
+        let show_label = extra_args.label;
 
-            el_container.setAttribute("data-type", input_type);
-            el_label.innerHTML = input_name;
-            if (show_label !== false) 
-                el_container.appendChild(el_label);
+        if (input_type == "button")
+            show_label = false;
 
-            if (input_type == "button") {
-                let el_input = blanke.createElement("button","form-button");
-                el_input.innerHTML = input_name;
+        el_container.setAttribute("data-type", input_type);
+        el_label.innerHTML = input_name;
+        if (show_label !== false) 
+            el_container.appendChild(el_label);
+
+        if (input_type == "button") {
+            let el_input = blanke.createElement("button","form-button");
+            el_input.innerHTML = input_name;
+            this.prepareInput(el_input, input_name);
+            el_inputs_container.appendChild(el_input);
+        }
+        
+        if (input_type == "text" || input_type == "number") {
+            let input_count = 1;
+            if (extra_args.inputs) input_count = extra_args.inputs;
+            el_container.setAttribute("data-size", input_count);
+
+            // add inputs
+            for (var i = 0; i < input_count; i++) {
+                let el_input = blanke.createElement("input","form-text");
+                // set starting val
+                el_input.value = 0;
+                if (input_type == "text")
+                    el_input.value = ifndef(extra_args.default, "");
+                // set input type
+                el_input.type = input_type;
+                // number: step
+                if (input_type == "number" && extra_args.step != undefined)
+                    el_input.step = extra_args.step;
+
                 this.prepareInput(el_input, input_name);
+
+                el_input.setAttribute('data-index',i);
                 el_inputs_container.appendChild(el_input);
+
+                // add separator if necessary
+                if (i < input_count - 1) {
+                    let el_sep = blanke.createElement("p","form-separator");
+                    el_sep.innerHTML = extra_args.separator;
+                    el_inputs_container.appendChild(el_sep);
+                }
             }
+        }
+
+        if (input_type == "color") {
+            let el_input = blanke.createElement("input","form-color");
+            el_input.type = "color";
+            this.prepareInput(el_input, input_name);
+            el_inputs_container.appendChild(el_input);
+        }
+
+        if (input_type == "select") {
+            let el_input = blanke.createElement("select","form-select");
             
-            if (input_type == "text" || input_type == "number") {
-                let input_count = 1;
-                if (extra_args.inputs) input_count = extra_args.inputs;
-                el_container.setAttribute("data-size", input_count);
-
-                // add inputs
-                for (var i = 0; i < input_count; i++) {
-                    let el_input = blanke.createElement("input","form-text");
-                    el_input.value = 0;
-                    el_input.type = input_type;
-
-                    this.prepareInput(el_input, input_name);
-
-                    el_input.setAttribute('data-index',i);
-                    el_inputs_container.appendChild(el_input);
-
-                    // add separator if necessary
-                    if (i < input_count - 1) {
-                        let el_sep = blanke.createElement("p","form-separator");
-                        el_sep.innerHTML = extra_args.separator;
-                        el_inputs_container.appendChild(el_sep);
-                    }
-                }
+            if (extra_args.placeholder) {
+                let placeholder = app.createElement("option");
+                placeholder.selected = (!extra_args.default ? true : false);
+                placeholder.disabled = true;
+                placeholder.hidden = true;
+                placeholder.innerHTML = extra_args.placeholder;
+                el_input.appendChild(placeholder);
             }
 
-            if (input_type == "color") {
-                let el_input = blanke.createElement("input","form-color");
-                el_input.type = "color";
-                this.prepareInput(el_input, input_name);
-                el_inputs_container.appendChild(el_input);
+            // add choices
+            for (let c of extra_args.choices) {
+                var new_option = app.createElement("option");
+                new_option.value = c;
+                if (extra_args.default == c) new_option.selected = true;
+                new_option.innerHTML = c;
+                el_input.appendChild(new_option);
             }
 
-            if (input_type == "select") {
-                let el_input = blanke.createElement("select","form-select");
-                /*
-                if (extra_args.placeholder) {
-                    let placeholder = app.createElement("option");
-                    placeholder.selected = true;
-                    placeholder.disabled = true;
-                    placeholder.value = input_name;
-                    el_input.appendChild(placeholder);
-                }*/
+            this.prepareInput(el_input, input_name);
+            el_inputs_container.appendChild(el_input);
+        }
 
-                // add choices
-                for (let c of extra_args.choices) {
-                    var new_option = app.createElement("option");
-                    new_option.value = c;
-                    new_option.innerHTML = c;
-                    el_input.appendChild(new_option);
-                }
+        el_container.appendChild(el_inputs_container);
+        el_container.setAttribute('data-name',input_name);
 
-                this.prepareInput(el_input, input_name);
-                el_inputs_container.appendChild(el_input);
+        this.container.appendChild(el_container);
+    }
+
+    removeInput (name) {
+        for (var i = 0; i < this.container.children.length; i++) {
+            if (this.container.children[i].dataset.name == name) {
+                blanke.destroyElement(this.container.children[i]);
             }
-
-            el_container.appendChild(el_inputs_container);
-            el_container.setAttribute('data-name',input_name);
-
-            this.container.appendChild(el_container);
         }
     }
 
@@ -408,13 +439,29 @@ class BlankeForm {
 
     getValue (input_name, index) {
         index = index || 0;
-        return this.input_ref[input_name][index].value;
+        if (this.input_types[input_name] == "number")
+            return parseFloat(this.input_ref[input_name][index].value);
+        else
+            return this.input_ref[input_name][index].value;
     }
 
     setValue (input_name, value, index) {
+        if (!this.input_ref[input_name]) return;
         index = index || 0;
         this.input_ref[input_name][index].value = value;
         this.input_values[input_name][index] = value;
+    }
+
+    useValues (inputs) {
+        for (let name in inputs) {
+            if (Array.isArray(inputs[name])) {
+                for (let i in inputs[name]) {
+                    this.setValue(name, inputs[name][i], i);
+                }
+            } else {
+                this.setValue(name, inputs[name])
+            }
+        }
     }
 }
 
