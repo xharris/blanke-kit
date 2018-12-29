@@ -492,17 +492,33 @@ var blanke = {
     destroyElement: function(element) {    
         element.parentNode.removeChild(element);
     },
+
+    sortChildren: function(element, fn_compare) {
+        let sorted_children = Array.from(element.children);
+        sorted_children.sort(fn_compare);
+        blanke.clearElement(element);
+        for (let e = 0; e < sorted_children.length; e++) {
+            element.appendChild(sorted_children[e]);
+        }
+    },
     
     cooldown_keys: {},
-    cooldownFn: function(name, cooldown_ms, fn) {
+    cooldownFn: function(name, cooldown_ms, fn, overwrite_timer) {
         if (!blanke.cooldown_keys[name]) 
             blanke.cooldown_keys[name] = {
-                timer: setTimeout(function(){
-                    blanke.cooldown_keys[name].func();
-                    delete blanke.cooldown_keys[name];
-                },cooldown_ms),
+                timer: null,
                 func: fn
             }
+        
+        // reset the timer if necessary
+        if (overwrite_timer || blanke.cooldown_keys.timer == null) {
+            clearTimeout(blanke.cooldown_keys[name].timer);
+            blanke.cooldown_keys[name].timer = setTimeout(function(){
+                blanke.cooldown_keys[name].func();
+                delete blanke.cooldown_keys[name];
+            },cooldown_ms);
+        }
+
         blanke.cooldown_keys[name].func = fn;
     },
 
