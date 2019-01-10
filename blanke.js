@@ -313,7 +313,7 @@ class BlankeForm {
 
         if (input_type == "button") {
             let el_input = blanke.createElement("button","form-button");
-            el_input.innerHTML = input_name;
+            el_input.innerHTML = ifndef(extra_args.label, input_name);
             this.prepareInput(el_input, input_name);
             el_inputs_container.appendChild(el_input);
         }
@@ -401,6 +401,23 @@ class BlankeForm {
         element.name_ref = name;
         this.input_ref[name].push(element);
         this.input_values[name].push(0);
+    }
+
+    getInput (input_name) {
+        if (this.input_ref[input_name].length == 1)
+            return this.input_ref[input_name][0];
+        return this.input_ref[input_name];
+    }
+
+    // if the enter key is pressed while an input is focused
+    onEnter (input_name, func) {
+        let this_ref = this;
+        for (var input of this.input_ref[input_name]) {
+            input.addEventListener('keyup', function(e){
+                if (event.keyCode === 13)
+                    func(e);
+            });
+        }
     }
 
     onChange (input_name, func) {
