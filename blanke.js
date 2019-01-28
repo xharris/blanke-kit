@@ -8,7 +8,7 @@ function ifndef(val, def) {
 function ifndef_obj(obj, defaults) {
     if (!obj) obj = {};
     for (let d in defaults) {
-        if (!obj[d]) obj[d] = defaults[d];
+        if (obj[d] === undefined) obj[d] = defaults[d];
     }
 }
 
@@ -289,9 +289,6 @@ class BlankeForm {
     }
 
     addInput (input) {
-        let el_container    = blanke.createElement("div", "form-group");
-        let el_label        = blanke.createElement("p", "form-label");
-        let el_inputs_container=blanke.createElement("div","form-inputs");
 
         let input_name = input[0];
         let input_type = input[1];
@@ -300,22 +297,31 @@ class BlankeForm {
         this.input_values[input_name] = [];
         this.input_types[input_name] = input_type;
 
+        let container_type = "div";
+        if (input_type == "checkbox")
+            container_type = "label";
+
+        let el_container    = blanke.createElement(container_type, "form-group");
+        let el_label        = blanke.createElement("p", "form-label");
+        let el_inputs_container=blanke.createElement("div","form-inputs");
+
+        let prepend_inputs = false;
         // input label
         let show_label = extra_args.label;
 
-        if (input_type == "button")
+        if (show_label === false || input_type == "button")
             show_label = false;
 
         el_container.setAttribute("data-type", input_type);
-        el_label.innerHTML = input_name;
+        el_label.innerHTML = (show_label || input_name);
         if (show_label !== false) 
             el_container.appendChild(el_label);
 
         if (input_type == "button") {
-            let el_input = blanke.createElement("button","form-button");
-            el_input.innerHTML = ifndef(extra_args.label, input_name);
-            this.prepareInput(el_input, input_name);
-            el_inputs_container.appendChild(el_input);
+            let el_button = blanke.createElement("button","form-button");
+            el_button.innerHTML = ifndef(extra_args.label, input_name);
+            this.prepareInput(el_button, input_name);
+            el_inputs_container.appendChild(el_button);
         }
         
         if (input_type == "text" || input_type == "number") {
@@ -325,21 +331,21 @@ class BlankeForm {
 
             // add inputs
             for (var i = 0; i < input_count; i++) {
-                let el_input = blanke.createElement("input","form-text");
+                let el_text = blanke.createElement("input","form-text");
                 // set starting val
-                el_input.value = 0;
+                el_text.value = 0;
                 if (input_type == "text")
-                    el_input.value = ifndef(extra_args.default, "");
+                    el_text.value = ifndef(extra_args.default, "");
                 // set input type
-                el_input.type = input_type;
+                el_text.type = input_type;
                 // number: step
                 if (input_type == "number" && extra_args.step != undefined)
-                    el_input.step = extra_args.step;
+                    el_text.step = extra_args.step;
 
-                this.prepareInput(el_input, input_name);
+                this.prepareInput(el_text, input_name);
 
-                el_input.setAttribute('data-index',i);
-                el_inputs_container.appendChild(el_input);
+                el_text.setAttribute('data-index',i);
+                el_inputs_container.appendChild(el_text);
 
                 // add separator if necessary
                 if (i < input_count - 1) {
@@ -348,6 +354,19 @@ class BlankeForm {
                     el_inputs_container.appendChild(el_sep);
                 }
             }
+        }
+
+        if (input_type == "checkbox") {
+            let el_checkbox = blanke.createElement("input","form-checkbox");
+            el_checkbox.type = "checkbox";
+            el_checkbox.checked = (extra_args.default ? true : false);
+            this.prepareInput(el_checkbox, input_name);
+
+            let el_checkmark = blanke.createElement("span","checkmark");
+
+            el_inputs_container.appendChild(el_checkbox);
+            el_inputs_container.appendChild(el_checkmark);
+            prepend_inputs = true;
         }
 
         if (input_type == "color") {
@@ -382,7 +401,10 @@ class BlankeForm {
             el_inputs_container.appendChild(el_input);
         }
 
-        el_container.appendChild(el_inputs_container);
+        if (prepend_inputs)
+            el_container.prepend(el_inputs_container);
+        else
+            el_container.appendChild(el_inputs_container);
         el_container.setAttribute('data-name',input_name);
 
         this.container.appendChild(el_container);
@@ -425,7 +447,7 @@ class BlankeForm {
         for (var input of this.input_ref[input_name]) {
             let event_type = 'input';
 
-            if (["color", "select"].includes(this.input_types[input_name])) event_type = "change";
+            if (["color", "select", "checkbox"].includes(this.input_types[input_name])) event_type = "change";
             if (this.input_types[input_name] == "button") event_type = "click";
 
             input.addEventListener(event_type, function(e){
@@ -433,15 +455,17 @@ class BlankeForm {
                 let input_value = this_ref.input_values[e.target.name_ref];
                 let input_ref = this_ref.input_ref[input_name];
 
-                if (input_type == "text" || input_type == "select")
-                    input_value[parseInt(e.target.dataset['index']) || 0] = e.target.value;
+                let val;
+                if (input_type == "text" || input_type == "select" || input_type == "color")
+                    val = e.target.value;
                 
+                if (input_type == "checkbox")
+                    val = this.checked;
+
                 if (input_type == "number")
-                    input_value[parseInt(e.target.dataset['index']) || 0] = parseInt(e.target.value);
+                    val = parseInt(e.target.value);
 
-                if (input_type == "color")
-                    input_value[parseInt(e.target.dataset['index']) || 0] = e.target.value;
-
+                input_value[parseInt(e.target.dataset['index']) || 0] = val;
                 let ret_val = func(input_value.slice());
                 
                 // if values are returned, set the inputs to them
@@ -458,6 +482,8 @@ class BlankeForm {
         index = index || 0;
         if (this.input_types[input_name] == "number")
             return parseFloat(this.input_ref[input_name][index].value);
+        else if (this.input_types[input_name] == "checkbox")
+            return this.input_ref[input_name][index].checked;
         else
             return this.input_ref[input_name][index].value;
     }
@@ -465,7 +491,10 @@ class BlankeForm {
     setValue (input_name, value, index) {
         if (!this.input_ref[input_name]) return;
         index = index || 0;
-        this.input_ref[input_name][index].value = value;
+        if (this.input_types[input_name] == "checkbox")
+            this.input_ref[input_name][index].checked = value;
+        else
+            this.input_ref[input_name][index].value = value;
         this.input_values[input_name][index] = value;
     }
 
