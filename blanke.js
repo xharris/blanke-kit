@@ -466,7 +466,7 @@ class BlankeForm {
                     val = parseInt(e.target.value);
 
                 input_value[parseInt(e.target.dataset['index']) || 0] = val;
-                let ret_val = func(input_value.slice());
+                let ret_val = func(input_value.length == 1 ? input_value[0] : input_value.slice());
                 
                 // if values are returned, set the inputs to them
                 if (ret_val) {
