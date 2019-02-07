@@ -577,9 +577,11 @@ var blanke = {
 
         let el_new_toast = blanke.createElement("div","toast-container");
         let el_content = blanke.createElement("p","content");
+        let el_br = blanke.createElement("br");
         el_content.innerHTML = text;
         el_new_toast.appendChild(el_content);
         blanke.el_toasts.appendChild(el_new_toast);
+        blanke.el_toasts.appendChild(el_br);
 
         // animation
         Array.from(blanke.el_toasts.children).forEach(function(el) {
@@ -597,7 +599,10 @@ var blanke = {
         setTimeout(function(){
             let animation = el_new_toast.animate([{ opacity:1 }, { opacity:0 }], { duration:200, iterations:1, easing:'ease-in'})
             animation.pause();
-            animation.onfinish = function(){ blanke.destroyElement(el_new_toast); }
+            animation.onfinish = function(){
+                blanke.destroyElement(el_new_toast);
+                blanke.destroyElement(el_br);
+            }
             animation.play();
         }, duration || 4000);
     },
