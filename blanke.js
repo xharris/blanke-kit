@@ -467,11 +467,16 @@ class BlankeForm {
 
                 input_value[parseInt(e.target.dataset['index']) || 0] = val;
                 let ret_val = func(input_value.length == 1 ? input_value[0] : input_value.slice());
-                
+                // concat is so that the re
+
                 // if values are returned, set the inputs to them
                 if (ret_val) {
-                    for (var input2 in input_ref) {
-                        input_ref[input2].value = ret_val[input2];
+                    if (Array.isArray(ret_val)) {
+                        for (var input2 in input_ref) {
+                            input_ref[input2].value = ret_val[input2];
+                        }
+                    } else {
+                        input_ref[0].value = ret_val;
                     }
                 }
             });
