@@ -550,7 +550,6 @@ var blanke = {
             element.appendChild(sorted_children[e]);
         }
     },
-    
     cooldown_keys: {},
     cooldownFn: function(name, cooldown_ms, fn, overwrite_timer) {
         if (!blanke.cooldown_keys[name]) 
@@ -632,7 +631,10 @@ var blanke = {
     },
 
     // possible choices: yes, no (MORE TO COME LATER)
+    modal_shown: false,
     showModal: function(html_body, choices) {
+        if (blanke.modal_shown) return;
+        blanke.modal_shown = true;
         html_actions = "";
         choice_keys = Object.keys(choices);
 
@@ -674,6 +676,7 @@ var blanke = {
 
             blanke.getElement("body > .ui-modal[data-uuid='"+uuid+"'] > .modal-actions > button[data-action='" + c + "']").onclick = function(){
                 choice_fn();
+                blanke.modal_shown = false;
                 blanke.getElement("body > .ui-modal[data-uuid='"+uuid+"']").remove();
             };
         });
